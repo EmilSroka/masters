@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+message Offer {
+    UUID id = 1;
+    Apartment apartment = 2;
+    optional string title = 3;
+    optional string description = 4;
+    optional google.protobuf.Timestamp time_scraped = 5;
+}
+
+message Apartment {
+    Currency price = 1;
+    DecimalNumber size = 2;
+    LatLang location = 3;
+    optional int32 year_built = 4;
+    optional int32 room_count = 5;
+    optional int32 floor = 6;
+    map<string, google.protobuf.Value> properties = 7;
+}
+
+message LatLang {
+    double latitude = 1;
+    double longitude = 2;
+}
+
+message Money {
+    DecimalNumber value = 1;
+    Currency currency = 2;
+}
+
+message DecimalNumber {
+    int64 value = 1;
+    optional int32 scale = 2;  
+}
+
+enum Currency {
+    CURRENCY_UNSPECIFIED = 0;
+    PLN = 1;
+}
+
+message UUID {
+    string value = 1;
+}
