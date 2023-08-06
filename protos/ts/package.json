@@ -1,0 +1,22 @@
+{
+  "name": "mes-proto-ts",
+  "version": "0.0.3",
+  "description": "",
+  "main": "dist/offers.js",
+  "types": "dist/offers.d.ts",
+  "scripts": {
+    "generate": "mkdir -p auto_gen && npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./auto_gen --proto_path ../ ../offers.proto",
+    "build": "tsc",
+    "publish": "npm publish"
+  },
+  "keywords": [],
+  "author": "Emil Sroka",
+  "license": "ISC",
+  "devDependencies": {
+    "@protobuf-ts/plugin": "^2.9.1",
+    "@types/node": "^20.4.8",
+    "protobufjs": "^7.2.4",
+    "ts-proto": "^1.156.2",
+    "typescript": "^5.1.6"
+  }
+}

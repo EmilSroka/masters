@@ -1,6 +1,8 @@
 syntax = "proto3";
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
 
 message Offer {
     UUID id = 1;
@@ -11,7 +13,7 @@ message Offer {
 }
 
 message Apartment {
-    Currency price = 1;
+    Money price = 1;
     DecimalNumber size = 2;
     LatLang location = 3;
     optional int32 year_built = 4;

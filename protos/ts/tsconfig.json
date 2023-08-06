@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es6",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "dist",
+    "declaration": true
+  },
+  "lib": ["es2015"],
+  "include": [
+    "auto_gen",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
