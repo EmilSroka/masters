@@ -1,0 +1,17 @@
+{
+  "name": "mes-scraping",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc"
+  },
+  "author": "Emil Sroka",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.4.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}
