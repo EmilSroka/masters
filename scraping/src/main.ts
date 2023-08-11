@@ -29,7 +29,7 @@ console.log(Offer.toJSON(test));
 console.log((test.apartment?.price?.value?.value ?? 1) * 10 ** -(test.apartment?.price?.value?.scale ?? 2))
 
 import { load } from 'cheerio';
-import fetch from 'node-fetch';
+import { createMorizonOfferScraper } from './pages/morizon';
 
 console.log('Scrapping morizon offer demo');
 
@@ -85,3 +85,6 @@ const scrape = async (url: string) => {
 
 scrape('https://www.morizon.pl/oferta/sprzedaz-mieszkanie-warszawa-mokotow-bialej-koniczyny-5-95m2-mzn2041954676');
 
+console.log('Scrapper demo');
+
+createMorizonOfferScraper().scrap(new Set()).then(console.log);

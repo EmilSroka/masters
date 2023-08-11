@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "esnext",
+    "module": "CommonJS",
     "esModuleInterop": true,
     "target": "es6",
     "moduleResolution": "node",
@@ -9,5 +9,6 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "lib": ["es2015"]
+  "esm": true,
+  "lib": ["ESNext"]
 }

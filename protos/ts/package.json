@@ -1,6 +1,6 @@
 {
   "name": "mes-proto-ts",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/offers.js",
   "types": "dist/offers.d.ts",

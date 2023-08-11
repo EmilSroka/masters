@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 
 
 message Offer {
-    UUID id = 1;
+    string id = 1;
     Apartment apartment = 2;
     optional string title = 3;
     optional string description = 4;
@@ -15,11 +15,12 @@ message Offer {
 message Apartment {
     Money price = 1;
     DecimalNumber size = 2;
-    LatLang location = 3;
-    optional int32 year_built = 4;
-    optional int32 room_count = 5;
-    optional int32 floor = 6;
-    map<string, google.protobuf.Value> properties = 7;
+    optional LatLang location = 3;
+    optional string address = 4;
+    optional int32 year_built = 5;
+    optional int32 room_count = 6;
+    optional int32 floor = 7;
+    map<string, google.protobuf.Value> properties = 8;
 }
 
 message LatLang {
@@ -40,8 +41,4 @@ message DecimalNumber {
 enum Currency {
     CURRENCY_UNSPECIFIED = 0;
     PLN = 1;
-}
-
-message UUID {
-    string value = 1;
 }
