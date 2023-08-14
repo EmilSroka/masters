@@ -15,8 +15,8 @@ message Offer {
 message Apartment {
     Money price = 1;
     DecimalNumber size = 2;
-    optional LatLang location = 3;
-    optional string address = 4;
+    string address = 3;
+    optional LatLang location = 4;
     optional int32 year_built = 5;
     optional int32 room_count = 6;
     optional int32 floor = 7;

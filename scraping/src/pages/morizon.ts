@@ -1,6 +1,8 @@
 import { Apartment, Currency, DecimalNumber, LatLang, Money, Offer } from "mes-proto-ts";
 import { CheerioAPI, load } from 'cheerio';
 import { BaseScraper, OfferListNavigator, OfferScraper } from "../scraper/base";
+import { ScrapingError, isScrapingError } from "../scraper/errors";
+import { getFirstChildrenText, getFirstElement, getFirstElementText, getLastElementText, getOnlyElement, getOnlyElementAttribute, getValuesUsingTemplate, noWhiteSpace, numberFromDigits, template } from "../scraper/utils";
 
 export const createMorizonOfferScraper = () => new BaseScraper({
     offerScraper: new MorizonOfferScraper(),
@@ -9,55 +11,240 @@ export const createMorizonOfferScraper = () => new BaseScraper({
 });
 
 class MorizonOfferScraper implements OfferScraper {
-    PAGE_ID_SELECTOR = '.property-page';
-
     getData(html: string): Offer {
         const $ = load(html);
-
-        const floorString = ($('.details-row .details-row__text').last().text().split('/')[0] ?? '')
-        const floorNumber = floorString.includes('parter') ? 0 : Number(floorString.replace(/\D/g, ''))
-
-        const regex = /latitude:([\d.]+),longitude:([\d.]+)/;
-        const match = html.match(regex);
-        let latitude = 0;
-        let longitude = 0;
-        if (match) {
-            latitude = parseFloat(match[1]);
-            longitude = parseFloat(match[2]);
-        }
-
+        const required = this.extractRequiredFields(html, $);
         return Offer.create({
-            id: `morizon:${$(this.PAGE_ID_SELECTOR).first().attr('id')}`,
+            ...this.getOptionalOfferFileds(html, $),
+            id: required.id,
             apartment: Apartment.create({
-                price: Money.create({
-                    value: DecimalNumber.create({
-                        value: Number(deleteNotDigits(getFirstText('.price-row__price', $))) * 100,
-                        scale: 2,
-                    }),
-                    currency: Currency.PLN,
-                }),
-                size: DecimalNumber.create({
-                    value: Number(deleteNotDigits(detailRow('Pow. całkowita', $))),
-                    scale: 2,
-                }),
-                location: LatLang.create({
-                    latitude, longitude
-                }),
-                address: /* getFirstText('.basic-info__location', $) */ deleteWhite(getFirstText('.basic-info__location', $)),
-                yearBuilt: Number(detailRow('Rok budowy', $)),
-                roomCount: Number(deleteNotDigits(getFirstText('.details-row .details-row__text', $))),
-                floor: floorNumber
+                ...this.getOptionalApartmentFileds(html, $),
+                price: required.price,
+                size: required.size,
+                address: required.address,
             }),
-            title: $('.description__title').first().text(),
-            description: $('.description-text').first().text(),
-            timeScraped: new Date(),
+            
         })
     }
 
     getPageId(html: string): string {
-        const $ = load(html);
-        return `morizon:${$(this.PAGE_ID_SELECTOR).first().attr('id')}`
+        return this.extractId(load(html));
     }
+
+
+    /* required fileds extractors */
+
+    private extractRequiredFields(html: string, $: CheerioAPI) {
+        const skipSymbol = Symbol();
+        const errors: Error[] = [];
+        const namesAndExtractors = [
+            ['id', () => this.extractId($)],
+            ['price', () => this.extractPrice($)],
+            ['size', () => this.extractSize($)],
+            ['address', () => this.extractAddress($)],
+        ] as const;
+        const output = namesAndExtractors.map(([name, extractor]) => {
+            try {
+                return [name, extractor()] as const;
+            } catch(error) {
+                if (isScrapingError(error)) {
+                    errors.push(error);
+                } else {
+                    errors.push(new Error(String(error)));
+                }
+                return [name, skipSymbol] as const;
+            }
+        }).reduce((acc, [name, value]) => {
+            if (value !== skipSymbol) {
+                acc[name] = value;
+            }
+            return acc;
+        }, {} as Record<'id' | 'price' | 'size' | 'address', any>);
+        if (errors.length > 0) {
+            throw ScrapingError.CannotScrapOffer('One of required fileds {id | price | size | address} is not present.', ...errors);
+        }
+        return output;
+    }
+
+    private extractId($: CheerioAPI): string {
+        try {
+            return `morizon:${getOnlyElementAttribute({ selector: '.property-page', attribute: 'id', $})}`;
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoId('Cannot extract morizon offer id', error);
+            }
+            throw ScrapingError.NoId('Unknown error');
+        }
+    }
+
+    private extractPrice($: CheerioAPI): Money {
+        try {
+            const elementText = getFirstElementText({ selector: '.price-row__price', $});
+            return Money.create({
+                /* Morizon shows values as 599 000 zł so we convert it to  -> 59900000 with scale 2 */
+                value: DecimalNumber.create({
+                    value: numberFromDigits(elementText) * 100, 
+                    scale: 2,
+                }),
+                currency: Currency.PLN,
+            });
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoOfferPrice('Cannot extract morizon offer price', error);
+            }
+            throw ScrapingError.NoOfferPrice('Unknown error');
+        }
+    }
+
+    private extractSize($: CheerioAPI): DecimalNumber {
+        try {
+            const elementText = extractMorizonDetailRowValue({contains: 'Pow. całkowita', $});
+            return DecimalNumber.create({
+                /* Morizon shows price as 66,98 m² so we convert it to  -> 6698 with scale 2 */
+                value: numberFromDigits(elementText), 
+                scale: 2,
+            });
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoOfferSize('Cannot extract morizon offer size', error);
+            }
+            throw ScrapingError.NoOfferSize(`Unknown error: ${error}`);
+        }
+    }
+
+    private extractAddress($: CheerioAPI): string {
+        try {
+            return noWhiteSpace(getFirstElementText({ selector: '.location-row__header', $}));
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoOfferAddress('Cannot extract morizon offer address', error);
+            }
+            throw ScrapingError.NoOfferAddress(`Unknown error: ${error}`);
+        }
+    }
+
+
+    /* optional offer fileds extractors */
+
+    private getOptionalOfferFileds(html: string, $: CheerioAPI) {
+        const namesAndExtractors = [
+            ['title', () => getFirstElementText({ selector: '.description__title', $})],
+            ['description',() => this.extractMorizonDescription(html)],
+            ['timeScraped', () => new Date()]
+        ] as [keyof Offer, () => any][];
+        return namesAndExtractors.reduce((acc, [name, extractor]) => {
+            let value;
+            try {
+                value = extractor();
+                acc[name] = value;
+                return acc;
+            } catch(error) {
+                // TODO: error logging
+                console.log(error);
+                return acc;
+            }
+        }, {} as Record<keyof Offer, any>);
+    }
+
+    private extractMorizonDescription(html: string) {
+        try {
+            const result = getValuesUsingTemplate({
+                content: html,
+                template: template`","description":"${'description'}"`
+            });
+            return result.description;
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoOfferOptionalAttribute('Cannot find a latitude and longitude on the page', error);
+            }
+            throw ScrapingError.NoOfferOptionalAttribute(`Unknown error: ${error}`);
+        }
+    }
+
+
+    /* optional apartment fileds extractors */
+
+    private getOptionalApartmentFileds(html: string, $: CheerioAPI) {
+        const namesAndExtractors = [
+            ['location', () => this.extractMorizonLatLang(html)],
+            ['yearBuilt', () => this.extractMorizonYearBuilt($)],
+            ['roomCount', () => this.extractMorizonRoomCount($)],
+            ['floor', () => this.extractMorizonFloor($)]
+        ] as [keyof Apartment, () => any][];
+        return namesAndExtractors.reduce((acc, [name, extractor]) => {
+            let value;
+            try {
+                value = extractor();
+                acc[name] = value;
+                return acc;
+            } catch(error) {
+                // TODO: error logging
+                console.log(error);
+                return acc;
+            }
+        }, {} as Record<keyof Apartment, any>);
+    }
+
+    private extractMorizonLatLang(html: string) {
+        try {
+            const result = getValuesUsingTemplate({
+                content: html,
+                template: template`{latitude:${'latitude'},longitude:${'longitude'}}`
+            });
+            const latitude = Number(result.latitude);
+            const longitude = Number(result.longitude);
+            if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+                throw ScrapingError.NoApartmentOptionalAttribute(`Found latitude "${result.latitude}" or longitude "${result.longitude}" is not a number`);
+            }
+            return LatLang.create({latitude, longitude});
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a latitude and longitude on the page', error);
+            }
+            throw ScrapingError.NoApartmentOptionalAttribute(`Unknown error: ${error}`);
+        }
+    }
+
+    private extractMorizonYearBuilt($: CheerioAPI) {
+        try {
+            return numberFromDigits(extractMorizonDetailRowValue({contains: 'Rok budowy', $}));
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a built year on the page', error);
+            }
+            throw ScrapingError.NoApartmentOptionalAttribute(`Unknown error: ${error}`);
+        }
+    }
+
+    private extractMorizonRoomCount($: CheerioAPI) {
+        try {
+            return numberFromDigits(getFirstElementText({ selector: '.details-row .details-row__text', $ }));
+        } catch(error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a room count on the page', error);
+            }
+            throw ScrapingError.NoApartmentOptionalAttribute(`Unknown error: ${error}`);
+        }
+    }
+
+    private extractMorizonFloor($: CheerioAPI) {
+        try {
+            const floorText = getLastElementText({ selector: '.details-row .details-row__text', $});
+            if (!floorText.includes('/')) {
+                throw ScrapingError.NoApartmentOptionalAttribute('Cannot parse floor value. Text does not include "/" character');
+            }
+            const firstPart = floorText.split('/')[0];
+            if (firstPart.includes('parter')) {
+                return 0;
+            }
+            return numberFromDigits(firstPart);
+        } catch (error) {
+            if (isScrapingError(error)) {
+                throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a floor on the page', error);
+            }
+            throw ScrapingError.NoApartmentOptionalAttribute(`Unknown error: ${error}`);
+        }
+    }    
 }
 
 class MorizonOfferListNavigator implements OfferListNavigator {
@@ -81,25 +268,14 @@ class MorizonOfferListNavigator implements OfferListNavigator {
             .filter(element => !!$(element).attr('href'))
             .map(element => new URL($(element).attr('href')!, url.origin));
     }
-    
 }
 
-function detailRow(contains: string, $: CheerioAPI) {
-    return $(`div.detailed-information__row:contains("${contains}")`).first().children('.detailed-information__cell--value').first().text();
-}
-
-function deleteNotDigits(value: string) {
-    return value.replace(/\D/g, '');
-}
-
-function deleteWhite(value: string) {
-    return value.replace(/\s+/g, '');
-}
-
-function getFirstText(selector: string, $: CheerioAPI) {
-    return $(selector).first().text();
-}
-
-function getLastText(selector: string, $: CheerioAPI) {
-    return $(selector).first().text();
+function extractMorizonDetailRowValue({contains, $} : {contains: string; $: CheerioAPI}) {
+    const element = getFirstElement({
+        selector: `div.detailed-information__row:contains("${contains}")`, $
+    });
+    return getFirstChildrenText({
+        selector: '.detailed-information__cell--value',
+        element, $
+    });
 }

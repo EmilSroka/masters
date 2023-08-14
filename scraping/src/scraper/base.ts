@@ -1,3 +1,4 @@
+import { error } from "console";
 import { Offer } from "mes-proto-ts";
 
 export interface Page {
@@ -60,8 +61,15 @@ export class BaseScraper {
         const fistNotScrappedIdx = await this.findFirstNotScrappedIndex(offersUrls, scrapedOffersIds);
         for (let i=0; i<=fistNotScrappedIdx; i++) {
             const offerPageHtml = await this.urlToHtml.get(offersUrls[i]);
-            const offer = this.page.offerScraper.getData(offerPageHtml);
-            result.push(offer);
+            try {
+                const offer = this.page.offerScraper.getData(offerPageHtml);
+                result.push(offer);
+                // TODO: delete log
+                console.log('Scrapped: ', offer.id);
+            } catch(error) {
+                // TODO: error logging
+                console.log(error);
+            }
         }
         return result;
     }
@@ -83,6 +91,3 @@ export class BaseScraper {
         return right;
     }
 }
-
-
-
