@@ -3,12 +3,13 @@ import { CheerioAPI, load } from 'cheerio';
 import { BaseScraper, OfferListNavigator, OfferScraper } from "../scraper/base";
 import { ScrapingError, isScrapingError } from "../scraper/errors";
 import { getFirstChildrenText, getFirstElement, getFirstElementText, getLastElementText, getOnlyElement, getOnlyElementAttribute, getValuesUsingTemplate, noWhiteSpace, numberFromDigits, template } from "../scraper/utils";
+import { OffersPersistence } from "../persistence/persistence";
 
-export const createMorizonOfferScraper = () => new BaseScraper({
+export const createMorizonOfferScraper = (offerPersistance?: OffersPersistence) => new BaseScraper({
     offerScraper: new MorizonOfferScraper(),
     offerListNavigator: new MorizonOfferListNavigator(),
     entryOfferListUrl: new URL('https://www.morizon.pl/mieszkania/warszawa/'),
-});
+}, offerPersistance);
 
 class MorizonOfferScraper implements OfferScraper {
     getData(html: string): Offer {

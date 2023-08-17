@@ -29,7 +29,7 @@ services:
       - kafka-data:/var/lib/kafka/data
       
   scraping:
-    image: srokaemil/mes-scraping:0.1.5
+    image: srokaemil/mes-scraping:latest
     depends_on:
       - kafka
 

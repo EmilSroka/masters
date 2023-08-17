@@ -1,11 +1,12 @@
 {
   "name": "mes-scraping",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/main.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "docker": "docker build -t srokaemil/mes-scraping:$npm_package_version . && docker tag srokaemil/mes-scraping:$npm_package_version srokaemil/mes-scraping:latest"
   },
   "author": "Emil Sroka",
   "license": "ISC",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
+    "kafkajs": "^2.2.4",
     "mes-proto-ts": "^0.0.6",
     "protobufjs": "^7.2.4",
     "uuid": "^9.0.0"

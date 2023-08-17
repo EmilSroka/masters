@@ -1,5 +1,6 @@
 import { error } from "console";
 import { Offer } from "mes-proto-ts";
+import { OffersPersistence } from "../persistence/persistence";
 
 export interface Page {
     offerScraper: OfferScraper,
@@ -34,12 +35,14 @@ class UrlToHtmlCache {
 } 
 
 export class BaseScraper {
+    offerPersistance?: OffersPersistence;
     urlToHtml: UrlToHtmlCache;
     page: Page;
 
-    constructor(page: Page) {
+    constructor(page: Page, offerPersistance?: OffersPersistence) {
         this.page = page;
         this.urlToHtml = new UrlToHtmlCache();
+        this.offerPersistance = offerPersistance;
     }
 
     async scrap(scrapedOffersIds: Set<string>) {
@@ -50,6 +53,11 @@ export class BaseScraper {
             const pageHtml = await this.urlToHtml.get(currentListUrl);
             const offers = await this.scrapPageOffers(pageHtml, scrapedOffersIds, currentListUrl);
             result.push(...offers);
+            if (this.offerPersistance) {
+                for (const offer of offers) {
+                    this.offerPersistance?.publishOffer(offer);
+                }
+            }
             scrapNext = offers.length > 0 && await this.page.offerListNavigator.hasNextPage(pageHtml, currentListUrl);
         } while (scrapNext);
         return result;
