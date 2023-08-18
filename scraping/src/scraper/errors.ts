@@ -17,7 +17,8 @@ export enum ScrapingErrorTypes {
     /* Converters  */
     NoDigits = 'NoDigits',
     /* Top Level */
-    CannotScrapOffer = 'CannotScrapOffer'
+    CannotScrapOffer = 'CannotScrapOffer',
+    CannotFetchPage = 'CannotFetchPage'
 }
 
 interface ErrorContructorParameter {
@@ -138,6 +139,21 @@ export class ScrapingError extends Error {
             message,
             reasons
         });
+    }
+
+    static CannotFetchPage(message?: string, ...reasons: Error[]) {
+        return new ScrapingError({
+            type: ScrapingErrorTypes.CannotFetchPage,
+            message,
+            reasons
+        });
+    }
+
+    toString() {
+        const reasons = this.reasons.map((error, idx) => `\n        ${idx}: ${error} \n`).join('');
+        const callStack = this.stack ? `\n    CallStack: ${this.stack}` : '';
+        const reason = this.reasons.length > 0 ? `\n    Reasons: [${reasons}\n]` : '';
+        return `ScrapingError of type ${this.type}: ${this.message}${callStack}${reason}`
     }
 }
 

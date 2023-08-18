@@ -116,6 +116,50 @@ export function noWhiteSpace(value: string) {
     return value.replace(/\s+/g, '');
 }
 
+/* fetching */
+
+interface FetchRetrySettings {
+    initialTimeoutMs: number,
+    backoffFactor: number,
+    maxAttempts: number
+}
+
+const fetchRetrySettingsDefault = {
+    initialTimeoutMs: 100,
+    backoffFactor: 2,
+    maxAttempts: 5
+} as const;
+
+export class FetchRetry {
+    private settings: FetchRetrySettings;
+
+    constructor (settings?: Partial<FetchRetrySettings>) {
+        this.settings = {
+            ...fetchRetrySettingsDefault,
+            ...(settings ?? {})
+        }
+    }
+
+    async handleRequest(url: URL, counter = 1): Promise<string> {
+        try {
+            return await fetch(url).then(response => response.text());
+        } catch (error) {
+            if (counter < this.settings.maxAttempts) {
+                await wait(this.settings.initialTimeoutMs * this.settings.backoffFactor ** counter);
+                return await this.handleRequest(url, counter + 1);
+            }
+            if (error && error instanceof Error) {
+                throw ScrapingError.CannotFetchPage('Cannot fetch page', error);
+            }
+            throw ScrapingError.CannotFetchPage(`Cannot fetch page. Reason: "${getFirst50Characters(error)}"`);
+        } 
+    }
+}
+
+export async function wait(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /* internal utils */
 
 function getFirst50Characters(str: any) {

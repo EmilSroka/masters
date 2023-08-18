@@ -1,14 +1,11 @@
 import { createMorizonOfferScraper } from './pages/morizon';
 import { KafkaOffersPersistence, OffersPersistence } from './persistence/persistence';
-import { BaseScraper } from './scraper/base';
-
-console.log('Morizon scrapper demo');
+import { Scraper } from './scraper/base';
 
 async function main() {
     const persitance: OffersPersistence = new KafkaOffersPersistence();
-    const scrapped = await persitance.getPublishedOfferIds();
-    const scraper: BaseScraper = createMorizonOfferScraper(persitance)
-    return await scraper.scrap(scrapped);
+    const scraper: Scraper = await createMorizonOfferScraper(persitance);
+    return await scraper.scrap(persitance);
 }
 
-main().then(console.log);
+main().then(() => console.log('Finished!'));

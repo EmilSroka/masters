@@ -5,11 +5,15 @@ import { ScrapingError, isScrapingError } from "../scraper/errors";
 import { getFirstChildrenText, getFirstElement, getFirstElementText, getLastElementText, getOnlyElement, getOnlyElementAttribute, getValuesUsingTemplate, noWhiteSpace, numberFromDigits, template } from "../scraper/utils";
 import { OffersPersistence } from "../persistence/persistence";
 
-export const createMorizonOfferScraper = (offerPersistance?: OffersPersistence) => new BaseScraper({
-    offerScraper: new MorizonOfferScraper(),
-    offerListNavigator: new MorizonOfferListNavigator(),
-    entryOfferListUrl: new URL('https://www.morizon.pl/mieszkania/warszawa/'),
-}, offerPersistance);
+export const createMorizonOfferScraper = async (persistance: OffersPersistence) => new BaseScraper({
+    page: {
+        offerScraper: new MorizonOfferScraper(),
+        offerListNavigator: new MorizonOfferListNavigator(),
+        entryOfferListUrl: new URL('https://www.morizon.pl/mieszkania/warszawa/'),
+    },
+    scrapedOffersIds: await persistance.getPublishedOfferIds(),
+    publish: async (offer: Offer) => await persistance.publishOffer(offer),
+});
 
 class MorizonOfferScraper implements OfferScraper {
     getData(html: string): Offer {
@@ -252,9 +256,9 @@ class MorizonOfferListNavigator implements OfferListNavigator {
     NEXT_PAGE_SELECTOR = '.pagination__main-button a';
 
     getNextPageLink(_: string, url: URL): URL {
-        const page = Number([...url.searchParams.values()][0] ?? '0');
+        const page = Number([...url.searchParams.values()][0] ?? '1');
         const nextPage = Math.min(page + 1, 200);
-        return new URL(`/mieszkania/warszawa/?page=${nextPage}`, url.hostname);
+        return new URL(`https://${url.hostname}/mieszkania/warszawa?page=${nextPage}`);
     }
 
     hasNextPage(_: string, url: URL): boolean {
