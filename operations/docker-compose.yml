@@ -35,9 +35,10 @@ services:
 
   store:
     image: srokaemil/mes-store:latest
-    depends_on:
-      - kafka
+    ports:
+      - 6020:5432
     environment:
+      POSTGRES_USER: admin
       POSTGRES_PASSWORD: ${STORE_PASSWORD}
     volumes:
       - postgresql-data:/var/lib/postgresql/data
