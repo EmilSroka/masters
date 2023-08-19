@@ -1,11 +1,3 @@
-import { createMorizonOfferScraper } from './pages/morizon';
-import { KafkaOffersPersistence, OffersPersistence } from './persistence/persistence';
-import { Scraper } from './scraper/base';
+import { EVERY_20_MINUTES, createMorizonScraperJob } from './jobs/jobs';
 
-async function main() {
-    const persitance: OffersPersistence = new KafkaOffersPersistence();
-    const scraper: Scraper = await createMorizonOfferScraper(persitance);
-    return await scraper.scrap(persitance);
-}
-
-main().then(() => console.log('Finished!'));
+createMorizonScraperJob({ schedule: EVERY_20_MINUTES, startOnCreation: true });
