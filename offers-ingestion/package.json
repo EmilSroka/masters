@@ -1,0 +1,25 @@
+{
+  "name": "mes-offers-ingestion",
+  "version": "0.0.4",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc",
+    "docker": "docker build -t srokaemil/mes-offers-ingestion:$npm_package_version . && docker tag srokaemil/mes-offers-ingestion:$npm_package_version srokaemil/mes-offers-ingestion:latest"
+  },
+  "author": "Emil Sroka",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@types/pg": "^8.10.2",
+    "dotenv": "^16.3.1",
+    "kafkajs": "^2.2.4",
+    "mes-proto-ts": "^0.0.7",
+    "pg": "^8.11.3",
+    "protobufjs": "^7.2.4"
+  }
+}

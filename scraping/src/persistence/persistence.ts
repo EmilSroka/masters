@@ -10,8 +10,6 @@ const kafka = new Kafka({
     brokers: ['kafka:9092']
 });
 
-Offer.encode(Offer.create()).finish()
-
 export interface OffersPersistence {
     publishOffer: (offer: Offer) => void
     getPublishedOfferIds: () => Promise<Set<string>>

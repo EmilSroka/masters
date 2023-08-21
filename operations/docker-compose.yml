@@ -43,6 +43,18 @@ services:
     volumes:
       - postgresql-data:/var/lib/postgresql/data
 
+  offers-ingestion:
+    image: srokaemil/mes-offers-ingestion:latest
+    depends_on:
+      - kafka
+      - store
+    environment:
+      - USER=admin
+      - PASSWORD=${STORE_PASSWORD}
+      - HOST=store
+      - DATABASE=postgres
+      - PORT=5432
+
 volumes:
   zookeeper-data:
   zookeeper-log:

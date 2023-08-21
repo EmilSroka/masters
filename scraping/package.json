@@ -1,6 +1,6 @@
 {
   "name": "mes-scraping",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "cheerio": "^1.0.0-rc.12",
     "cron": "^2.4.1",
     "kafkajs": "^2.2.4",
-    "mes-proto-ts": "^0.0.6",
+    "mes-proto-ts": "^0.0.7",
     "protobufjs": "^7.2.4",
     "uuid": "^9.0.0"
   }
