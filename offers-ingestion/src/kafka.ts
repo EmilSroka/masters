@@ -14,8 +14,12 @@ export async function kafkaSubscriber(processingFunction: ProcessingFunction<Off
     const consumer = kafka.consumer({ groupId: 'offers-ingestion' });
     await consumer.connect();
     await consumer.subscribe({ topic: OFFERS_TOPIC, fromBeginning: true });
+    let successCount = 0;
+    let failureCount = 0;
+    let messagesCount = 0;
     consumer.run({
         eachMessage: async ({ message }) => {
+            messagesCount += 1;
             console.log(`Start processing message with key ${message.key}`);
             let error, offer;
 
@@ -38,10 +42,15 @@ export async function kafkaSubscriber(processingFunction: ProcessingFunction<Off
                 throw undefined;
             }
             if (status === ProcessingResult.Success) {
+                successCount += 1;
                 console.log(`Sucesfully finished processing message with key ${message.key}`);
             }
             if (status === ProcessingResult.FailedSkip) {
+                failureCount += 1;
                 console.log(`Faild to process message with key ${message.key} - skip`);
+            }
+            if (messagesCount % 100 === 0) {
+                console.log(`Success count: ${successCount}, failures count: ${failureCount}`);
             }
         }
     });

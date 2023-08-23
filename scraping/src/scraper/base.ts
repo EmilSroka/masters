@@ -61,13 +61,16 @@ export class BaseScraper implements Scraper {
     }
 
     async scrap() {
+        let offersCount = 0;
         let currentListUrl = this.page.entryOfferListUrl;
         do {
             const [offers, hasNextPage, nextPageUrlOrUndefined] = await this.handleListPage(currentListUrl);
             for (const offer of offers) {
                 await this.publish(offer);
             }
+            offersCount += offers.length;
             if (!hasNextPage) {
+                console.log(`Scrapped ${offersCount} offers during this run`);
                 return;
             }
             currentListUrl = nextPageUrlOrUndefined;
@@ -95,10 +98,12 @@ export class BaseScraper implements Scraper {
     async scrapPageOffers(html: string, url: URL) {
         const result: Offer[] = [];
         const offersUrls = this.page.offerListNavigator.getOffersLinks(html, url);
-        const fistNotScrappedIdx = await this.findFirstNotScrappedIndex(offersUrls);
-        for (let i=0; i<=fistNotScrappedIdx; i++) {
+        if (await this.isWholePageScrapped(offersUrls)) {
+            return [];
+        }
+        for (const offerUrl of offersUrls) {
             try {
-                const offerPageHtml = await this.urlToHtml.get(offersUrls[i]);
+                const offerPageHtml = await this.urlToHtml.get(offerUrl);
                 const offer = this.page.offerScraper.getData(offerPageHtml);
                 result.push(offer);
                 // TODO: delete log
@@ -110,19 +115,10 @@ export class BaseScraper implements Scraper {
         }
         return result;
     }
-
-    private async findFirstNotScrappedIndex(offersUrls: URL[]) {
-        let left = 0;
-        let right = offersUrls.length - 1;
-        while (left <= right) {
-            const mid = left + Math.floor((right - left) / 2);
-            if (!await this.isScrapped(offersUrls[mid])) {
-                left = mid + 1;
-            } else {
-                right = mid - 1;
-            }
-        }
-        return right;
+    
+    private async isWholePageScrapped(offersUrls: URL[]) {
+        const isScrappedArray = await Promise.all([...offersUrls.map(offerUrl => this.isScrapped(offerUrl))]);
+        return isScrappedArray.every(isScrapped => isScrapped);
     }
 
     private async isScrapped(url: URL) {
