@@ -46,9 +46,9 @@ export class KafkaOffersPersistence implements OffersPersistence {
     private async publishOfferInKafkaTopic(topic: string, offer: Offer) {
         await this.producer.connect();
         await this.producer.send({
-            topic: OFFERS_TOPIC,
+            topic: topic,
             messages: [
-                { key: offer.id, value: Buffer.from(Offer.encode(offer).finish().buffer) },
+                { key: offer.id, value: JSON.stringify(Offer.toJSON(offer)) },
             ],
         });
     }

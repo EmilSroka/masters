@@ -101,16 +101,28 @@ export class PipelineError extends Error {
         const reason = this.reasons.length > 0 ? `\n    Reasons: [${reasons}\n]` : '';
         return `PipelineError of type ${this.type}: ${this.message}${callStack}${reason}`
     }
+
+    getType() {
+        return this.type;
+    }
 }
 
 function isPipelineError(variable: any): variable is PipelineError {
     return variable && typeof variable === 'object' && variable instanceof PipelineError;
 }
 
+const typeToCount = new Map<PipelineErrorTypes, number>();
+let count = 0;
 export function pipelineErrorHandler(error: any) {
     if (!isPipelineError(error)) {
         error = PipelineError.UnknownError('Unknown error while processing', error);
     }
+    typeToCount.set(error.getType(), (typeToCount.get(error.getType()) ?? 0) + 1);
     console.log(error);
+    count += 1;
+    if (count === 100) {
+        console.log(`Pipeline errors per type: """${JSON.stringify([...typeToCount])}"""`);
+        count = 0;
+    }
     return ProcessingResult.FailedSkip;
 }

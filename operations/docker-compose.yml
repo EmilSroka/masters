@@ -33,6 +33,11 @@ services:
     depends_on:
       - kafka
 
+  data-loader:
+    image: srokaemil/mes-data-loader:latest
+    depends_on:
+      - kafka
+
   store:
     image: srokaemil/mes-store:latest
     ports:

@@ -29,7 +29,7 @@ export async function kafkaSubscriber(processingFunction: ProcessingFunction<Off
 
             try {
                 if (message.value !== null) {
-                    offer = Offer.decode(new Uint8Array(message.value));
+                    offer = Offer.fromJSON(JSON.parse(message.value.toString('utf8')));
                 }
             } catch(error) {
                 error = PipelineError.CannotParseKafkaMessage(`Cannot decode message with key ${message.key}`, error);
