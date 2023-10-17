@@ -4,6 +4,7 @@ import { KafkaOffersPersistence, OffersPersistence } from "../persistence/persis
 import { Scraper } from "../scraper/base";
 
 export const EVERY_20_MINUTES = '*/20 * * * *';
+export const EVERY_2_HOURS = '0 */2 * * *';
 
 interface JobSettings {
     schedule: string,

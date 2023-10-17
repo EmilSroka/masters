@@ -8,13 +8,11 @@ export function transformFileContentToOffers(content: string): Offer[] {
 
 function transformOfferTextToOfferOrNull(offerText: string) {
     try {
-        const numberArray = offerText.split(',').map(Number);
-        const uint8Array = new Uint8Array(numberArray);
-        const offer = Offer.decode(uint8Array);
+        const offer = Offer.fromJSON(JSON.parse(offerText));
         if (typeof offer.id !== 'string') {
             return null;
         }
-        return Offer.decode(uint8Array);
+        return offer;
     } catch(error) {
         console.log(`Cannot decode content """${offerText}""" -> error: """${error}"""`);
         return null;

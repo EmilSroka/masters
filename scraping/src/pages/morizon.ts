@@ -11,7 +11,7 @@ export const createMorizonOfferScraper = async (persistance: OffersPersistence) 
         offerListNavigator: new MorizonOfferListNavigator(),
         entryOfferListUrl: new URL('https://www.morizon.pl/mieszkania/warszawa/'),
     },
-    scrapedOffersIds: await persistance.getPublishedOfferIds(),
+    scrapedOffersIds: new Set(),
     publish: async (offer: Offer) => await persistance.publishOffer(offer),
 });
 
@@ -33,7 +33,7 @@ class MorizonOfferScraper implements OfferScraper {
     }
 
     getPageId(html: string): string {
-        return this.extractId(load(html));
+        return this.extractId(html);
     }
 
 
@@ -43,7 +43,7 @@ class MorizonOfferScraper implements OfferScraper {
         const skipSymbol = Symbol();
         const errors: Error[] = [];
         const namesAndExtractors = [
-            ['id', () => this.extractId($)],
+            ['id', () => this.extractId(html)],
             ['price', () => this.extractPrice($)],
             ['size', () => this.extractSize($)],
             ['address', () => this.extractAddress($)],
@@ -71,9 +71,13 @@ class MorizonOfferScraper implements OfferScraper {
         return output;
     }
 
-    private extractId($: CheerioAPI): string {
+    private extractId(html: string): string {
         try {
-            return `morizon:${getOnlyElementAttribute({ selector: '.property-page', attribute: 'id', $})}`;
+            const id = getValuesUsingTemplate({
+                content: html,
+                template: template`-mzn${'id'}">`
+            })['id'];
+            return `morizon:mzn${id}`;
         } catch(error) {
             if (isScrapingError(error)) {
                 throw ScrapingError.NoId('Cannot extract morizon offer id', error);
@@ -84,7 +88,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractPrice($: CheerioAPI): Money {
         try {
-            const elementText = getFirstElementText({ selector: '.price-row__price', $});
+            const elementText = getFirstElementText({ selector: '#basic-info-price-row > div:first-child > span:first-child', $});
             return Money.create({
                 /* Morizon shows values as 599 000 zł so we convert it to  -> 59900000 with scale 2 */
                 value: DecimalNumber.create({
@@ -106,7 +110,7 @@ class MorizonOfferScraper implements OfferScraper {
             const elementText = extractMorizonDetailRowValue({contains: 'Pow. całkowita', $});
             return DecimalNumber.create({
                 /* Morizon shows price as 66,98 m² so we convert it to  -> 6698 with scale 2 */
-                value: numberFromDigits(elementText), 
+                value: elementText.includes(',') ? numberFromDigits(elementText) : (numberFromDigits(elementText) * 100), 
                 scale: 2,
             });
         } catch(error) {
@@ -119,7 +123,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractAddress($: CheerioAPI): string {
         try {
-            return noWhiteSpace(getFirstElementText({ selector: '.location-row__header', $}));
+            return noWhiteSpace(getFirstElementText({ selector: '.container-with-sidebar > section:first-child > div:nth-child(3)', $}));
         } catch(error) {
             if (isScrapingError(error)) {
                 throw ScrapingError.NoOfferAddress('Cannot extract morizon offer address', error);
@@ -133,7 +137,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private getOptionalOfferFileds(html: string, $: CheerioAPI) {
         const namesAndExtractors = [
-            ['title', () => getFirstElementText({ selector: '.description__title', $})],
+            ['title', () => getFirstElementText({ selector: '.puB8QH', $})],
             ['description',() => this.extractMorizonDescription(html)],
             ['timeScraped', () => new Date()]
         ] as [keyof Offer, () => any][];
@@ -155,7 +159,7 @@ class MorizonOfferScraper implements OfferScraper {
         try {
             const result = getValuesUsingTemplate({
                 content: html,
-                template: template`","description":"${'description'}"`
+                template: template`description","${'description'}"`
             });
             return result.description;
         } catch(error) {
@@ -194,7 +198,7 @@ class MorizonOfferScraper implements OfferScraper {
         try {
             const result = getValuesUsingTemplate({
                 content: html,
-                template: template`{latitude:${'latitude'},longitude:${'longitude'}}`
+                template: template`"latitude":${'latid'},"longitude":${'longid'}},${'latitude'},${'longitude'},`
             });
             const latitude = Number(result.latitude);
             const longitude = Number(result.longitude);
@@ -223,7 +227,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractMorizonRoomCount($: CheerioAPI) {
         try {
-            return numberFromDigits(getFirstElementText({ selector: '.details-row .details-row__text', $ }));
+            return numberFromDigits(getFirstElementText({ selector: '.FN9jgE ._0mnFnL', $ }));
         } catch(error) {
             if (isScrapingError(error)) {
                 throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a room count on the page', error);
@@ -234,7 +238,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractMorizonFloor($: CheerioAPI) {
         try {
-            const floorText = getLastElementText({ selector: '.details-row .details-row__text', $});
+            const floorText = getLastElementText({ selector: '.FN9jgE ._0mnFnL', $});
             if (!floorText.includes('/')) {
                 throw ScrapingError.NoApartmentOptionalAttribute('Cannot parse floor value. Text does not include "/" character');
             }
@@ -268,7 +272,7 @@ class MorizonOfferListNavigator implements OfferListNavigator {
 
     getOffersLinks(html: string, url: URL): URL[] {
         const $ = load(html);
-        return $('a.offer__outer')
+        return $('a.card__outer')
             .toArray()
             .filter(element => !!$(element).attr('href'))
             .map(element => new URL($(element).attr('href')!, url.origin));
@@ -277,10 +281,10 @@ class MorizonOfferListNavigator implements OfferListNavigator {
 
 function extractMorizonDetailRowValue({contains, $} : {contains: string; $: CheerioAPI}) {
     const element = getFirstElement({
-        selector: `div.detailed-information__row:contains("${contains}")`, $
+        selector: `div.zyVm89:contains("${contains}")`, $
     });
     return getFirstChildrenText({
-        selector: '.detailed-information__cell--value',
+        selector: '.EEGlsn',
         element, $
     });
 }
