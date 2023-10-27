@@ -88,7 +88,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractPrice($: CheerioAPI): Money {
         try {
-            const elementText = getFirstElementText({ selector: '#basic-info-price-row > div:first-child > span:first-child', $});
+            const elementText = getFirstElementText({ selector: '.JQpATq', $});
             return Money.create({
                 /* Morizon shows values as 599 000 zł so we convert it to  -> 59900000 with scale 2 */
                 value: DecimalNumber.create({
