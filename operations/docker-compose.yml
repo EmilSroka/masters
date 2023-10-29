@@ -73,6 +73,11 @@ services:
       - DATABASE=postgres
       - PORT=5432
 
+  frontend:
+    image: srokaemil/mes-frontend:latest
+    ports:
+      - "4000:80"
+
 volumes:
   zookeeper-data:
   zookeeper-log:
