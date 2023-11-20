@@ -63,6 +63,7 @@ def clear_dataframe(dataframe):
     only_numeric_values.loc[only_numeric_values['year_built'] < 1800, 'year_built'] = np.nan
     for col in [column for column in only_numeric_values.columns if column != 'price']:
         only_numeric_values[col + '_is_nan'] = only_numeric_values[col].isna().astype(int)
+    only_numeric_values['floor'] = tf.cast(only_numeric_values['floor'], tf.int64)
     return only_numeric_values
 
 
@@ -97,9 +98,9 @@ def offer_to_flat_dict(offer: offers_pb2.Offer) -> Dict[str, Any]:
         'address': offer.apartment.address,
         'latitude': offer.apartment.location.latitude,
         'longitude': offer.apartment.location.longitude,
-        'year_built': offer.apartment.year_built if offer.apartment.year_built != 0 else None,
-        'room_count': offer.apartment.room_count,
-        'floor': offer.apartment.floor,
+        'year_built':  offer.apartment.year_built if offer.apartment.HasField('year_built') else np.nan,
+        'room_count': offer.apartment.room_count if offer.apartment.HasField('room_count')  else np.nan,
+        'floor': offer.apartment.floor if offer.apartment.HasField('floor') else np.nan,
     }
 
 

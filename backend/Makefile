@@ -5,4 +5,10 @@ run:
 	@ uvicorn main:app --reload
 
 build:
-	@ docker build -t srokaemil/mes-backend:0.0.3 . && docker tag srokaemil/mes-backend:0.0.3 srokaemil/mes-backend:latest
+	@ docker build -t srokaemil/mes-backend:1.0.1 . && docker tag srokaemil/mes-backend:1.0.0 srokaemil/mes-backend:latest
+
+publish:
+	@ docker push srokaemil/mes-backend:1.0.1 && docker push srokaemil/mes-backend:latest
+
+build-amd:
+	@ docker buildx build --platform linux/amd64 -t "srokaemil/mes-backend:0.0.4" . --push && docker buildx build --platform linux/amd64 -t "srokaemil/mes-backend:latest" . --push

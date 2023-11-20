@@ -1,12 +1,14 @@
 {
   "name": "mes-offers-ingestion",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/main.ts",
     "build": "tsc",
-    "docker": "docker build -t srokaemil/mes-offers-ingestion:$npm_package_version . && docker tag srokaemil/mes-offers-ingestion:$npm_package_version srokaemil/mes-offers-ingestion:latest"
+    "docker": "docker build -t srokaemil/mes-offers-ingestion:$npm_package_version . && docker tag srokaemil/mes-offers-ingestion:$npm_package_version srokaemil/mes-offers-ingestion:latest",
+    "docker-publish": "docker push srokaemil/mes-offers-ingestion:$npm_package_version && docker push srokaemil/mes-offers-ingestion:latest",
+    "docker-amd": "docker buildx build --platform linux/amd64 -t srokaemil/mes-offers-ingestion:$npm_package_version . --push && docker buildx build --platform linux/amd64 -t srokaemil/mes-offers-ingestion:latest . --push"
   },
   "author": "Emil Sroka",
   "license": "ISC",

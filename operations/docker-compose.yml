@@ -33,10 +33,10 @@ services:
     depends_on:
       - kafka
 
-  data-loader:
-    image: srokaemil/mes-data-loader:latest
-    depends_on:
-      - kafka
+  # data-loader:
+  #   image: srokaemil/mes-data-loader:latest
+  #   depends_on:
+  #     - kafka
 
   store:
     image: srokaemil/mes-store:latest
@@ -44,7 +44,7 @@ services:
       - 6020:5432
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: ${STORE_PASSWORD}
+      POSTGRES_PASSWORD: mysecretpassword
     volumes:
       - postgresql-data:/var/lib/postgresql/data
 
@@ -55,7 +55,7 @@ services:
       - store
     environment:
       - USER=admin
-      - PASSWORD=${STORE_PASSWORD}
+      - PASSWORD=mysecretpassword
       - HOST=store
       - DATABASE=postgres
       - PORT=5432
@@ -63,20 +63,20 @@ services:
   backend:
     image: srokaemil/mes-backend:latest
     ports:
-      - "6030:80"
+      - "80:80"
     volumes:
       - ml-models:/ml
     environment:
       - USER=admin
-      - PASSWORD=${STORE_PASSWORD}
+      - PASSWORD=mysecretpassword
       - HOST=store
       - DATABASE=postgres
       - PORT=5432
 
-  frontend:
-    image: srokaemil/mes-frontend:latest
-    ports:
-      - "4000:80"
+#   frontend:
+#     image: srokaemil/mes-frontend:latest
+#     ports:
+#       - "4000:80"
 
 volumes:
   zookeeper-data:
