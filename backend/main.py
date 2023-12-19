@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from model import model
 from model import service
 import datetime
@@ -12,14 +11,6 @@ from google.protobuf.json_format import Parse
 LOCAL_MODE = bool(os.environ.get('LOCAL_MODE', 'True'))
 
 app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
 
 @app.post("/")
 async def predict_price(request: Request):

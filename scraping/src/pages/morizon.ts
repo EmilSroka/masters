@@ -88,7 +88,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractPrice($: CheerioAPI): Money {
         try {
-            const elementText = getFirstElementText({ selector: '.JQpATq', $});
+            const elementText = getFirstElementText({ selector: '.OhoajE', $});
             return Money.create({
                 /* Morizon shows values as 599 000 zł so we convert it to  -> 59900000 with scale 2 */
                 value: DecimalNumber.create({
@@ -137,7 +137,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private getOptionalOfferFileds(html: string, $: CheerioAPI) {
         const namesAndExtractors = [
-            ['title', () => getFirstElementText({ selector: '.puB8QH', $})],
+            ['title', () => getFirstElementText({ selector: '.YN-1ia', $})],
             ['description',() => this.extractMorizonDescription(html)],
             ['timeScraped', () => new Date()]
         ] as [keyof Offer, () => any][];
@@ -227,7 +227,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractMorizonRoomCount($: CheerioAPI) {
         try {
-            return numberFromDigits(getFirstElementText({ selector: '.FN9jgE ._0mnFnL', $ }));
+            return numberFromDigits(getFirstElementText({ selector: '.iUQalA', $ }));
         } catch(error) {
             if (isScrapingError(error)) {
                 throw ScrapingError.NoApartmentOptionalAttribute('Cannot find a room count on the page', error);
@@ -238,7 +238,7 @@ class MorizonOfferScraper implements OfferScraper {
 
     private extractMorizonFloor($: CheerioAPI) {
         try {
-            const floorText = getLastElementText({ selector: '.FN9jgE ._0mnFnL', $});
+            const floorText = getLastElementText({ selector: '.iUQalA', $});
             if (!floorText.includes('/')) {
                 throw ScrapingError.NoApartmentOptionalAttribute('Cannot parse floor value. Text does not include "/" character');
             }

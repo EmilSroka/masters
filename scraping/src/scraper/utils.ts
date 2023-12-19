@@ -1,5 +1,6 @@
 import { AnyNode, Cheerio, CheerioAPI } from "cheerio";
 import { ScrapingError } from "./errors";
+import fetch from 'isomorphic-fetch';
 
 interface Selector {
     selector: string,

@@ -132,6 +132,7 @@ def read_proto_from_db(connection: connection, start_date: date) -> List[offers_
 
 
 def connect_to_db():
+    print(STORE_PASSWORD)
     if 'LOCAL_MODE' in globals() and LOCAL_MODE:
         return psycopg2.connect(
             dbname='admin',
